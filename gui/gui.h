@@ -6,6 +6,14 @@
 #include <iostream>
 
 // TODO: Reference additional headers your program requires here.
+class NativeEvent {
+    //
+};
+
+class Application {
+    //
+};
+
 // use coroutine for event 机制
 // use C++ module, concept, ranges, and container
 // use react-native, flutter, swiftUI, winUI and composition 模式

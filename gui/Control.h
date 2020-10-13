@@ -4,7 +4,10 @@
 #include <vector>
 #include <map>
 #include <functional>
-#include <WinUser.h> // for CreateWindow, CreateWindowEx, CreateFont, HWND, COLORREF, DT_CENTER | DT_SINGLELINE, WS_CHILD | WS_VISIBLE | SS_NOTIFY | WS_EX_TRANSPARENT, WPARAM, HDC, HFONT, HBITMAP
+// #include <WinUser.h>
+// for CreateWindow, CreateWindowEx, CreateFont, DeleteObject
+// HWND, COLORREF, RGB, DT_CENTER | DT_SINGLELINE, WS_CHILD | WS_VISIBLE | SS_NOTIFY | WS_EX_TRANSPARENT,
+// WPARAM, HDC, HFONT, HBITMAP
 
 namespace utils {
     enum UnitStatus { sNormal, sFocus, sPressed };
@@ -17,28 +20,33 @@ namespace utils {
 
     class Control;
     class Container;
+    class Form;
 
     struct Context {
-        Context(HWND aOwner, Container* aParent, Control* aControl) : owner(aOwner), parent(aParent), control(aControl) {}
-        HWND owner;
+        Context(Form* aOwner, Container* aParent, Control* aControl) : owner(aOwner), parent(aParent), control(aControl) {}
+        Form* owner;
         Container* parent;
         Control* control;
     };
 
     using Handler = std::function<void(Context& context)>;
 
+    class NativeImageHandle {
+        //
+    };
+
     class Image {
     public:
         static Image fromPath(std::wstring const& imagePath);
         static Image formResourceId(int resourceId);
+
+    private:
+        NativeImageHandle handle_;
     };
 
     class Point {
     public:
-        static Point move(Point self, int dx, int dy) {
-            return self.move(dx, dy);
-        }
-
+        Point(): Point(0, 0) {}
         Point(int x, int y): x_(x), y_(y) {}
         int x() const {
             return x_;
@@ -47,7 +55,7 @@ namespace utils {
             return y_;
         }
         Point move(int dx, int dy) const {
-            return Point(x_ + dx, y_ + dy);
+            return {x_ + dx, y_ + dy};
         }
     private:
         int x_, y_;
@@ -120,12 +128,44 @@ namespace utils {
         Tiled tiled_;
     };
 
+    class NativeFontHandle {
+        //
+    };
+
     class Font {
     public:
         static Font of(std::wstring const& familyName);
+        Font GetFont(int height, bool isBold, std::wstring const& fontName) {
+            Font result;
+            auto it = fonts_.find(fontName);
+            if (it == fonts_.end()) {
+                result = CreateFont(height, 0, 0, 0, isBold, FALSE, FALSE,
+                                    FALSE, GB2312_CHARSET, OUT_DEFAULT_PRECIS,
+                                    CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+                                    FIXED_PITCH | FF_MODERN, fontName.c_str());
+            } else {
+                result = it->second;
+            }
+            return result;
+        }
+
+        void ReleaseFont(Font font) {
+            DeleteObject(font);
+        }
+
+    private:
+        NativeFontHandle handle_;
     };
 
     class TextLayout {
+        //
+    };
+
+    class TextStyle {
+        //
+    };
+
+    class Color {
         //
     };
 
@@ -165,7 +205,7 @@ namespace utils {
         }
 
         Point const& GetPosition() {
-            return Point(position_.x(), position_.y());
+            return position_;
         }
 
         Size const& GetSize() {
@@ -174,10 +214,10 @@ namespace utils {
         }
 
         Rect GetBounds() {
-            return Rect(position_, size_);
+            return {position_, size_};
         }
 
-        bool IsHide() {
+        bool IsHide() const {
             return isHide_;
         }
 
@@ -201,7 +241,7 @@ namespace utils {
             size_ = bounds.size();
         }
 
-        void SetText(std::wstring const& text, int x, int y, int style, int size, bool isBold, COLORREF color, std::wstring const& fontName) {
+        void SetText(std::wstring const& text, int x, int y, TextStyle style, int size, bool isBold, Color color, std::wstring const& fontName) {
             text_ = text;
             textX_ = x;
             textY_ = y;
@@ -265,10 +305,10 @@ namespace utils {
         std::wstring text_;
         int textX_ = 0;
         int textY_ = 0;
-        int textStyle_ = DT_CENTER | DT_SINGLELINE;
+        TextStyle textStyle_; // = DT_CENTER | DT_SINGLELINE;
         int textSize_ = 24;
         bool isBold_ = false;
-        COLORREF textColor_ = RGB(0, 0, 0);
+        Color textColor_; // = RGB(0, 0, 0);
         std::wstring fontName_;
 
         std::wstring backgroundImageFilename_;
@@ -286,7 +326,7 @@ namespace utils {
     class Button : public Control {
     public:
         Button() = default;
-        ~Button() = default;
+        ~Button() override = default;
 
         void Draw() final {
             switch (state_) {
@@ -324,11 +364,14 @@ namespace utils {
     class ToggleButton : public Button {
     public:
         ToggleButton() = default;
-        ~ToggleButton() = default;
+        ~ToggleButton() override = default;
         // TODO find same group pressed button, reset it
     private:
         int toggleGroupId_ = 0;
     };
+
+    using WPARAM = unsigned int;
+    using LPARAM = unsigned int;
 
     class Container : public Control {
     public:
@@ -340,11 +383,11 @@ namespace utils {
             children_.push_back(child);
         }
 
-        void SetActionHandler(std::function<LRESULT(WPARAM wParam, LPARAM IParam)>&& onAction) {
+        void SetActionHandler(std::function<LRESULT(WPARAM, LPARAM)>&& onAction) {
             onAction_ = onAction;
         }
 
-        void SetActionFinallyHandler(std::function<LRESULT(WPARAM wParam, LPARAM IParam)>&& onActionFinally) {
+        void SetActionFinallyHandler(std::function<LRESULT(WPARAM wParam, LPARAM lParam)>&& onActionFinally) {
             onActionFinally_ = onActionFinally;
         }
 
@@ -361,8 +404,8 @@ namespace utils {
         void HideItem(Control* item);
     protected:
         std::vector<Control*> children_;
-        std::function<LRESULT(WPARAM wParam, LPARAM IParam)> onAction_ = nullptr;
-        std::function<LRESULT(WPARAM wParam, LPARAM IParam)> onActionFinally_ = nullptr;
+        std::function<LRESULT(WPARAM wParam, LPARAM lParam)> onAction_ = nullptr;
+        std::function<LRESULT(WPARAM wParam, LPARAM lParam)> onActionFinally_ = nullptr;
         std::function<LRESULT(Context&)> onBeforeShow_ = nullptr;
     };
 
@@ -375,6 +418,15 @@ namespace utils {
         Size viewPortSize_;
     };
 
+    class NativeWindowHandle {
+        //
+    };
+
+    class NativeDrawHandle {
+        //
+    };
+
+    // Wrap and Dispatcher Native Message to children_;
     class Form : public Container {
     public:
         Form() : Container() {}
@@ -388,39 +440,21 @@ namespace utils {
             }
         }
 
-        void Create(Rect const& bounds, HWND parent, int ID) {
+        void Create(Rect const& bounds, NativeWindowHandle parent, int ID) {
             handle_ = parent;
             ID_ = ID;
-            CreateWindowEx(0/*extra-style*/, L"className", L"windowName",
+            handle_ = CreateWindowEx(0/*extra-style*/, L"className", L"windowName",
                 WS_CHILD | WS_VISIBLE | SS_NOTIFY | WS_EX_TRANSPARENT,
                 bounds.position().x(), bounds.position().y(), bounds.size().width(), bounds.size().height(),
                 parent, nullptr/*menu*/, nullptr/*instance*/, this);
         }
 
-        HWND GetHandler() {
+        NativeWindowHandle GetHandler() {
             return handle_;
         }
 
-        HDC GetHDC() {
+        NativeDrawHandle GetHDC() {
             return hdc_;
-        }
-
-        HFONT GetFont(int height, bool isBold, std::wstring const& fontName) {
-            HFONT result;
-            auto it = fonts_.find(fontName);
-            if (it == fonts_.end()) {
-                result = CreateFont(height, 0, 0, 0, isBold, FALSE, FALSE,
-                    FALSE, GB2312_CHARSET, OUT_DEFAULT_PRECIS,
-                    CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-                    FIXED_PITCH | FF_MODERN, fontName.c_str());
-            } else {
-                result = it->second;
-            }
-            return result;
-        }
-
-        void ReleaseFont(HFONT font) {
-            DeleteObject(font);
         }
     protected:
         /*
@@ -435,11 +469,11 @@ namespace utils {
         DECLARE_MESSAGE_MAP()
         */
     private:
-        HWND handle_ = nullptr;
-        HDC hdc_ = nullptr;
-        HBITMAP hBitmap_ = nullptr;
-        HBITMAP hOldBitmap_ = nullptr;
+        NativeWindowHandle handle_; // = nullptr;
+        NativeDrawHandle hdc_; // = nullptr;
+        Image hBitmap_; // = nullptr;
+        Image hOldBitmap_; // = nullptr;
         Control* currentChild_ = nullptr;
-        std::map<std::wstring, HFONT> fonts_;
+        std::map<std::wstring, Font> fonts_;
     };
 }

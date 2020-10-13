@@ -29,6 +29,20 @@ namespace utils {
             image = Image::fromPath(filename);
         }
         DisplayUtil::drawImage(image, mapToScreen(GetPosition()), GetSize(), ImageDrawMode(ImageDrawMode::AspectRatio::Keep, ImageDrawMode::Scale::NonScale, ImageDrawMode::Filling::NonFull, ImageDrawMode::Tiled::NonTiled));
+    }
+
+    void Control::drawText() {
+        if (!text_.empty()) {
+            if (fontName_.empty()) {
+                // parent_;
+            } else {
+                // self;
+            }
+            DisplayUtil::drawText(text_, mapToScreen(GetPosition()), GetSize(), Font::of(fontName_), TextLayout());
+        }
+    }
+
+    void DisplayUtil::drawImage(Image const& image, Point const& position, Size const& size, ImageDrawMode layout) {
         //CImage img;
         //if (resId) {
         //    HINSTANCE hInst = AfxGetResourceHandle();
@@ -42,32 +56,16 @@ namespace utils {
         //}
     }
 
-    void Control::drawText() {
-        if (!text_.empty()) {
-            if (fontName_.empty()) {
-                // parent_;
-            } else {
-                // self;
-            }
-            DisplayUtil::drawText(text_, mapToScreen(GetPosition()), GetSize(), Font::of(fontName_), TextLayout());
-            //HFONT font = parent_->GetFont(static_cast<int>(text_.length()), isBold_, fontName_);
-            //HGDIOBJ oldFont = SelectObject(parent_->GetHDC(), font);
-            //int oldBackMode = ::SetBkMode(parent_->GetHDC(), TRANSPARENT);
-            //SetTextColor(parent_->GetHDC(), textColor_);
-            //CRect textBounds = bounds_;
-            //textBounds.MoveToXY(textX_, textY_);
-            //DrawText(parent_->GetHDC(), text_.c_str(), static_cast<int>(text_.length()), &textBounds, textStyle_);
-            //::SetBkMode(parent_->GetHDC(), oldBackMode);
-            //SelectObject(parent_->GetHDC(), oldFont);
-        }
-    }
-
-    void DisplayUtil::drawImage(Image const& image, Point const& position, Size const& size, ImageDrawMode layout) {
-        //
-    }
-
     void DisplayUtil::drawText(std::wstring const& text, Point const& position, Size const& size, Font const& font, TextLayout layout) {
-        //
+        //HFONT font = parent_->GetFont(static_cast<int>(text_.length()), isBold_, fontName_);
+        //HGDIOBJ oldFont = SelectObject(parent_->GetHDC(), font);
+        //int oldBackMode = ::SetBkMode(parent_->GetHDC(), TRANSPARENT);
+        //SetTextColor(parent_->GetHDC(), textColor_);
+        //CRect textBounds = bounds_;
+        //textBounds.MoveToXY(textX_, textY_);
+        //DrawText(parent_->GetHDC(), text_.c_str(), static_cast<int>(text_.length()), &textBounds, textStyle_);
+        //::SetBkMode(parent_->GetHDC(), oldBackMode);
+        //SelectObject(parent_->GetHDC(), oldFont);
     }
 
     Control* Container::FindControl(Point point) {
