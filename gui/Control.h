@@ -22,6 +22,10 @@ namespace utils {
     class Container;
     class Form;
 
+    class Disposable {
+        virtual void release() = 0;
+    };
+
     struct Context {
         Context(Form* aOwner, Container* aParent, Control* aControl) : owner(aOwner), parent(aParent), control(aControl) {}
         Form* owner;
@@ -35,11 +39,11 @@ namespace utils {
         //
     };
 
-    class Image {
+    class Image : public Disposable {
     public:
         static Image fromPath(std::wstring const& imagePath);
         static Image formResourceId(int resourceId);
-
+        void release() override;
     private:
         NativeImageHandle handle_;
     };
@@ -132,7 +136,7 @@ namespace utils {
         //
     };
 
-    class Font {
+    class Font : public Disposable {
     public:
         static Font of(std::wstring const& familyName);
         Font GetFont(int height, bool isBold, std::wstring const& fontName) {
@@ -152,7 +156,7 @@ namespace utils {
         void ReleaseFont(Font font) {
             DeleteObject(font);
         }
-
+        void release() override;
     private:
         NativeFontHandle handle_;
     };
@@ -403,6 +407,7 @@ namespace utils {
 
         void HideItem(Control* item);
     protected:
+        Control* focused_;
         std::vector<Control*> children_;
         std::function<LRESULT(WPARAM wParam, LPARAM lParam)> onAction_ = nullptr;
         std::function<LRESULT(WPARAM wParam, LPARAM lParam)> onActionFinally_ = nullptr;

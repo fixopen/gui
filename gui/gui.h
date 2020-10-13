@@ -16,9 +16,10 @@ class Application {
 
 // use coroutine for event 机制
 // use C++ module, concept, ranges, and container
-// use react-native, flutter, swiftUI, winUI and composition 模式
+// use react-native, flutter, SwiftUI, WinUI and composition 模式
 // support MVVM
 // cross Windows, Linux, macOS, Android, iOS
+// use multi-inherit support mixin
 
 // DisplayUtil: drawImage(image, position, size, layout), drawText(text, position, size, font, layout)
 // Control: size, draw[color, image, font(text layout), DC], click[select], input[keyboard], cursorOver[mouse, point, touch], hide, show, disable, enable, resize

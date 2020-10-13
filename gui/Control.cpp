@@ -1,4 +1,4 @@
-#include <atlimage.h>
+// #include <atlimage.h>
 
 #include "Control.h"
 
@@ -10,19 +10,19 @@
 
 namespace utils {
     Image Image::fromPath(std::wstring const& imagePath) {
-        return Image();
+        return {};
     }
 
     Image Image::formResourceId(int resourceId) {
-        return Image();
+        return {};
     }
 
     Font Font::of(std::wstring const& familyName) {
-        return Font();
+        return {};
     }
 
     void Control::drawBackground(int resId, std::wstring const& filename) {
-        Image image;
+        Image image{};
         if (resId) {
             image = Image::formResourceId(resId);
         } else if (!filename.empty()) {
